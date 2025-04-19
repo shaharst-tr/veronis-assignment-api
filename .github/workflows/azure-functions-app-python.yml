@@ -1,0 +1,112 @@
+name: Terraform and Azure Function Deployment
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  terraform:
+    name: "Terraform Infrastructure Deployment"
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_IN_AUTOMATION: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init -input=false
+
+      - name: Terraform Validate
+        run: |
+          cd terraform
+          terraform validate
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+
+          terraform apply -input=false -auto-approve
+
+      - name: Export Function App Name
+        id: export-function-name
+        run: |
+          cd terraform
+
+          # Extract only the function app name line and clean it
+          APP_NAME=$(terraform output | grep "^function_app_name" | cut -d '=' -f2 | tr -d ' "')
+
+          echo "Extracted function app name: $APP_NAME"
+
+          # Set the output variable for the next job
+          echo "function_app_name=$APP_NAME" >> $GITHUB_OUTPUT
+
+      # - name: Export Terraform Output for Function App Name
+      #   id: export-tf-output
+      #   run: |
+      #     function_app_name=$(terraform -chdir=./terraform output -raw function_app_name)
+      #     # Use the multiline syntax for GitHub outputs
+      #     echo "function_app_name<<EOF" >> $GITHUB_OUTPUT
+      #     echo "$function_app_name" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
+
+    outputs:
+      function_app_name: ${{ steps.export-function-name.outputs.function_app_name }}
+
+  deploy-function:
+    name: "Deploy Azure Function App"
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          cd python-app
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup Azure Functions Core Tools
+        run: |
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ needs.terraform.outputs.function_app_name }}
+          package: "."
+          respect-funcignore: true
+          scm-do-build-during-deployment: true

@@ -1,0 +1,58 @@
+name: PR Validation - Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform-plan:
+    name: "Terraform Plan"
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_IN_AUTOMATION: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init -input=false
+
+      - name: Terraform Validate
+        run: |
+          cd terraform
+          terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd terraform
+          terraform plan -input=false -no-color -out=tfplan
+
+      - name: Post Plan Summary
+        if: always()
+        run: |
+          cd terraform
+          echo "### Terraform Plan Results" >> $GITHUB_STEP_SUMMARY
+          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
