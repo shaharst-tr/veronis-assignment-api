@@ -13,7 +13,7 @@ variable "tenant_id" {
 variable "project_name" {
   description = "The name of the project, used as a prefix for resources"
   type        = string
-  default     = "restaurant-api"
+  default     = "restaurant-app"
 }
 
 variable "environment" {
