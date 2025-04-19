@@ -7,7 +7,7 @@ on:
 
 jobs:
   terraform-plan:
-    name: "Terraform Plan"
+    name: "PR Validation - Terraform Plan"
     runs-on: ubuntu-latest
     env:
       TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
