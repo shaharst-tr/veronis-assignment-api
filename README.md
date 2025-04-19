@@ -167,7 +167,7 @@ Configures the Application Gateway with WAF protection, providing secure access 
 
 ### Common Issues
 
-1. **SSL Certificate Warnings**: The development environment uses a self-signed certificate. In production, replace with a trusted certificate.
+1. **SSL Certificate Warnings**: The development environment uses a self-signed certificate. In production, will be replace with a trusted certificate.
 
 2. **401 Unauthorized Errors**: Ensure you're using the correct admin API key. Check Key Vault for the current value.
 

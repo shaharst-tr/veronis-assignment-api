@@ -62,15 +62,6 @@ jobs:
           # Set the output variable for the next job
           echo "function_app_name=$APP_NAME" >> $GITHUB_OUTPUT
 
-      # - name: Export Terraform Output for Function App Name
-      #   id: export-tf-output
-      #   run: |
-      #     function_app_name=$(terraform -chdir=./terraform output -raw function_app_name)
-      #     # Use the multiline syntax for GitHub outputs
-      #     echo "function_app_name<<EOF" >> $GITHUB_OUTPUT
-      #     echo "$function_app_name" >> $GITHUB_OUTPUT
-      #     echo "EOF" >> $GITHUB_OUTPUT
-
     outputs:
       function_app_name: ${{ steps.export-function-name.outputs.function_app_name }}
 

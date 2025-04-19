@@ -296,7 +296,7 @@ resource "azurerm_application_gateway" "main" {
 
 # Log Analytics for App Gateway
 resource "azurerm_monitor_diagnostic_setting" "appgw" {
-  name                       = "appgw-diag-logs"
+  name                       = "appgw-d-logs"
   target_resource_id         = azurerm_application_gateway.main.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
