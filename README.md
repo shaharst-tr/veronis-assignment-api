@@ -33,7 +33,7 @@ The infrastructure includes:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/restaurant-api-infrastructure.git
+   git clone https://github.com/shaharst-tr/veronis-assignment-api
    cd restaurant-api-infrastructure
    ```
 
